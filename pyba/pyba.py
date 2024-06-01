@@ -162,7 +162,7 @@ def residuals(
     points3d = params[n_cameras * 13 :].reshape((n_points, 3))
     cam_indices_list = list(set(camera_indices))
 
-    points_proj = np.zeros(shape=(point_indices.shape[0], 2), dtype=np.float)
+    points_proj = np.zeros(shape=(point_indices.shape[0], 2), dtype=float)
     for cam_id in cam_indices_list:
         update_parameters(
             camera_params[cam_id], cam_list[cam_id], update_intrinsic, update_distort

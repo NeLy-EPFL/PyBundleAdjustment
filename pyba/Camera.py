@@ -41,7 +41,7 @@ class Camera:
         self.intrinsic = intr
         self.tvec = tvec
         self.R = R
-        self.distort = np.zeros(5, dtype=np.float) if distort is None else distort
+        self.distort = np.zeros(5, dtype=float) if distort is None else distort
 
     @property
     def P(self):
