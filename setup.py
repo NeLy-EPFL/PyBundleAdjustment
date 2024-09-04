@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="nely-pyba",
-    version="0.13",
+    version="0.13.1",
     author="Semih Günel",
     packages=["pyba"],
     description="Python Bundle Adjustment Routines",
