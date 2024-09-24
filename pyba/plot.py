@@ -71,12 +71,12 @@ def plot_3d(
     points3d = np.copy(points3d)
     points3d -= points3d.mean()
     white = (1.0, 1.0, 1.0, 0.0)
-    ax_3d.w_xaxis.set_pane_color(white)
-    ax_3d.w_yaxis.set_pane_color(white)
+    ax_3d.xaxis.set_pane_color(white)
+    ax_3d.yaxis.set_pane_color(white)
 
-    ax_3d.w_xaxis.line.set_color(white)
-    ax_3d.w_yaxis.line.set_color(white)
-    ax_3d.w_zaxis.line.set_color(white)
+    ax_3d.xaxis.line.set_color(white)
+    ax_3d.yaxis.line.set_color(white)
+    ax_3d.zaxis.line.set_color(white)
 
     if lim is not None:
         max_range = lim

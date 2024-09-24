@@ -119,7 +119,7 @@ class Camera:
 
     def get_image(self, img_id: int):
         try:
-            img = plt.imread(self.image_path.format(img_id=img_id))
+            img = cv2.imread(self.image_path.format(img_id=img_id))
         except:
             img = np.zeros((480, 960), dtype=np.uint8)
         if img.ndim == 2 or (img.ndim == 3 and img.shape[-1] == 1):
