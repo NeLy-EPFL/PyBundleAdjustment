@@ -11,5 +11,11 @@ setuptools.setup(
     description="Python Bundle Adjustment Routines",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/NeLy-EPFL/PyBundleAdjustment"
+    url="https://github.com/NeLy-EPFL/PyBundleAdjustment",
+    install_requires=[
+        "opencv-python-headless>=4.8.1.78", # https://github.com/NeLy-EPFL/DeepFly3D/security/dependabot/4
+        "numpy",
+        "matplotlib",
+        "scipy"
+    ],
 )
