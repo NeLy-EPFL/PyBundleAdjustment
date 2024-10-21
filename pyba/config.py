@@ -1,34 +1,58 @@
 import numpy as np
 
+LEG_RIGHT_FRONT = (178, 178, 255)
+LEG_RIGHT_MIDDLE = (102, 102, 255)
+LEG_RIGHT_REAR = (0, 0, 255)
+LEG_LEFT_FRONT = (255, 178, 178)
+LEG_LEFT_MIDDLE = (255, 102, 102)
+LEG_LEFT_REAR = (255, 0, 0)
+BODY = (255, 254, 254)
+
+# LEG_RIGHT_FRONT = (198, 219, 239)
+# LEG_RIGHT_MIDDLE = (107, 174, 214)
+# LEG_RIGHT_REAR = (49, 130, 189)
+# LEG_LEFT_FRONT = (253, 174, 107)
+# LEG_LEFT_MIDDLE = (253, 141,  60)
+# LEG_LEFT_REAR = (230,  85,  13)
+# BODY = (49, 163,  84)
+
+LEG_RIGHT_FRONT = (186, 30, 49)
+LEG_RIGHT_MIDDLE = (201, 86, 79)
+LEG_RIGHT_REAR = (213, 133, 121)
+LEG_LEFT_FRONT = (15, 115, 153)
+LEG_LEFT_MIDDLE = (26, 141, 175)
+LEG_LEFT_REAR = (117, 190, 203)
+BODY = (210, 210, 210)
+
 df3d_colors = [
-    (255, 0, 0),
-    (255, 0, 0),
-    (255, 0, 0),
-    (255, 0, 0),
-    (0, 0, 255),
-    (0, 0, 255),
-    (0, 0, 255),
-    (0, 0, 255),
-    (0, 255, 0),
-    (0, 255, 0),
-    (0, 255, 0),
-    (0, 255, 0),
-    (255, 131, 0),
-    (255, 131, 0),
-    (255, 255, 0),
-    (255, 255, 0),
-    (255, 255, 0),
-    (255, 255, 0),
-    (255, 0, 255),
-    (255, 0, 255),
-    (255, 0, 255),
-    (255, 0, 255),
-    (0, 255, 255),
-    (0, 255, 255),
-    (0, 255, 255),
-    (0, 255, 255),
-    (255, 131, 0),
-    (255, 131, 0),
+    LEG_RIGHT_FRONT,
+    LEG_RIGHT_FRONT,
+    LEG_RIGHT_FRONT,
+    LEG_RIGHT_FRONT,
+	LEG_RIGHT_MIDDLE,
+    LEG_RIGHT_MIDDLE,
+    LEG_RIGHT_MIDDLE,
+    LEG_RIGHT_MIDDLE,
+	LEG_RIGHT_REAR,
+    LEG_RIGHT_REAR,
+    LEG_RIGHT_REAR,
+    LEG_RIGHT_REAR,
+    BODY,
+    BODY,
+	LEG_LEFT_FRONT,
+    LEG_LEFT_FRONT,
+    LEG_LEFT_FRONT,
+    LEG_LEFT_FRONT,
+	LEG_LEFT_MIDDLE,
+    LEG_LEFT_MIDDLE,
+    LEG_LEFT_MIDDLE,
+    LEG_LEFT_MIDDLE,
+    LEG_LEFT_REAR,
+    LEG_LEFT_REAR,
+    LEG_LEFT_REAR,
+    LEG_LEFT_REAR,
+    BODY,
+    BODY,
 ]
 
 df3d_bones = np.array([[i, i + 1] for i in range(15) if (i + 1) % 5 != 0])
