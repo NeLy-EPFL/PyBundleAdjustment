@@ -142,21 +142,31 @@ class Camera:
     def plot_2d(
         self,
         img_id: int,
-        points2d: Optional[np.ndarray] = None,
+        points: Optional[np.ndarray] = None,
         bones: Optional[np.ndarray] = None,
         colors: Optional[List[Tuple]] = None,
     ) -> np.ndarray:
-        img = self.get_image(img_id)
-        points2d = self.points2d[img_id] if points2d is None else points2d
+        """
+        Parameters
+        ----------
+        ...
 
+        points: either points2d to plot directly, or points3d in which case they will
+        be projected for plotting.
+
+        """
+        img = self.get_image(img_id)
+        points = self.points2d[img_id] if points is None else points[[img_id]]
+        if points.shape[-1] == 3:  # If 3D points are given, project them
+            points = self.project(points).squeeze()
         # bones
         if bones is not None:
             for idx, b in enumerate(bones):
                 if self.can_see(img_id, b[0]):
                     img = cv2.line(
                         img,
-                        tuple(points2d[b[0]].astype(int)),
-                        tuple(points2d[b[1]].astype(int)),
+                        tuple(points[b[0]].astype(int)),
+                        tuple(points[b[1]].astype(int)),
                         colors[idx] if colors is not None else (128, 0, 0),
                         5,
                     )
@@ -164,7 +174,7 @@ class Camera:
         for jid in range(self.get_njoints()):
             if self.can_see(img_id, jid):
                 img = cv2.circle(
-                    img, tuple(points2d[jid].astype(int)), 5, [0, 0, 128], 5
+                    img, tuple(points[jid].T.astype(int)), 5, [0, 0, 128], 5
                 )
 
         return img
