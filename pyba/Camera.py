@@ -156,17 +156,28 @@ class Camera:
 
         """
         img = self.get_image(img_id)
-        points = self.points2d[img_id] if points is None else points[[img_id]]
-        if points.shape[-1] == 3:  # If 3D points are given, project them
-            points = self.project(points).squeeze()
+
+        if points is None:
+            
+            points = self.points2d[img_id]
+
+        if points.shape[-1] == 3:
+            # points are given as 3d coords
+            points3d = points[img_id]  # (n_joints, 3)
+            points2d = self.project(points3d[np.newaxis, ...]).squeeze()   # project works only in batches
+        elif points.shape[-1] == 2:
+            points2d = points
+        else:
+            raise ValueError(f"Expected points to have shape (..., 2) or (..., 3), but got shape {points.shape}")
+    
         # bones
         if bones is not None:
             for idx, b in enumerate(bones):
-                if self.can_see(img_id, b[0]):
+                if self.can_see(img_id, b[0]) and self.can_see(img_id, b[1]):
                     img = cv2.line(
                         img,
-                        tuple(points[b[0]].astype(int)),
-                        tuple(points[b[1]].astype(int)),
+                        tuple(points2d[b[0]].astype(int)),
+                        tuple(points2d[b[1]].astype(int)),
                         colors[idx] if colors is not None else (128, 0, 0),
                         5,
                     )
@@ -174,7 +185,7 @@ class Camera:
         for jid in range(self.get_njoints()):
             if self.can_see(img_id, jid):
                 img = cv2.circle(
-                    img, tuple(points[jid].T.astype(int)), 5, [0, 0, 128], 5
+                    img, tuple(points2d[jid].T.astype(int)), 5, [0, 0, 128], 5
                 )
 
         return img
