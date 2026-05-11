@@ -139,38 +139,37 @@ class Camera:
             "intr": self.intrinsic,
         }
 
-    def plot_2d(
-        self,
-        img_id: int,
-        points: Optional[np.ndarray] = None,
-        bones: Optional[np.ndarray] = None,
-        colors: Optional[List[Tuple]] = None,
-    ) -> np.ndarray:
+    def plot_2d(self,
+                img_id: int,
+                points2d: Optional[np.ndarray] = None,
+                bones: Optional[np.ndarray] = None,
+                colors: Optional[List[Tuple]] = None) -> np.ndarray:
         """
+        Plot 2D points (and optional bones) on the camera image for `img_id`.
+
         Parameters
         ----------
-        ...
+        img_id : int
+            Index of the image/frame to draw on.
+        points2d : np.ndarray, optional
+            Array of shape (n_joints, 2) giving the 2D points to plot. If
+            None, the camera's stored 2D points for this frame are used. To
+            plot reprojected 3D points instead, use `plot_reprojections`.
+        bones : np.ndarray, optional
+            Array of joint-index pairs defining bones to draw.
+        colors : list of tuples, optional
+            Per-bone RGB colors.
 
-        points: either points2d to plot directly, or points3d in which case they will
-        be projected for plotting.
-
+        Returns
+        -------
+        np.ndarray
+            The image with points and bones drawn on it.
         """
         img = self.get_image(img_id)
 
-        if points is None:
-            
-            points = self.points2d[img_id]
+        if points2d is None:
+            points2d = self.points2d[img_id]
 
-        if points.shape[-1] == 3:
-            # points are given as 3d coords
-            points3d = points[img_id]  # (n_joints, 3)
-            points2d = self.project(points3d[np.newaxis, ...]).squeeze()   # project works only in batches
-        elif points.shape[-1] == 2:
-            points2d = points
-        else:
-            raise ValueError(f"Expected points to have shape (..., 2) or (..., 3), but got shape {points.shape}")
-    
-        # bones
         if bones is not None:
             for idx, b in enumerate(bones):
                 if self.can_see(img_id, b[0]) and self.can_see(img_id, b[1]):
@@ -189,6 +188,42 @@ class Camera:
                 )
 
         return img
+
+    def plot_reprojections(self,
+                           img_id: int,
+                           points3d: np.ndarray,
+                           bones: Optional[np.ndarray] = None,
+                           colors: Optional[List[Tuple]] = None) -> np.ndarray:
+        """
+        Project a set of 3D points into this camera and plot them on the
+        image for `img_id`.
+
+        Parameters
+        ----------
+        img_id : int
+            Index of the image/frame to draw on.
+        points3d : np.ndarray
+            Either a (n_joints, 3) array of 3D points for this frame, or a
+            (T, n_joints, 3) array from which the row at `img_id` will be
+            used.
+        bones : np.ndarray, optional
+            Array of joint-index pairs defining bones to draw.
+        colors : list of tuples, optional
+            Per-bone RGB colors.
+
+        Returns
+        -------
+        np.ndarray
+            The image with reprojected points and bones drawn on it.
+        """
+        if points3d.ndim == 3:
+            points3d = points3d[img_id]
+        elif points3d.ndim != 2:
+            raise ValueError(f'Expected points3d to have shape (n_joints, 3) or '
+                             f'(T, n_joints, 3), but got shape {points3d.shape}')
+        # `project` expects a batch dimension (T, n_joints, 3)
+        points2d = self.project(points3d[np.newaxis, ...]).squeeze(axis=0)
+        return self.plot_2d(img_id, points2d=points2d, bones=bones, colors=colors)
 
     def project(self, points3d: np.ndarray) -> np.ndarray:
         """
