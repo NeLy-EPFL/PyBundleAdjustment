@@ -125,29 +125,19 @@ class CameraNetwork:
         points: Optional[str] = "points2d",
     ) -> np.ndarray:
         """points: which points to plot
-        can be point2d or reprojection
+        can be points2d or reprojection
         """
+        if points == "points2d":
+            panels = [c.plot_2d(img_id, bones=self.bones, colors=self.colors)
+                      for c in self]
+        elif points == "reprojection":
+            panels = [c.plot_reprojections(img_id, self.points3d,
+                                           bones=self.bones, colors=self.colors)
+                      for c in self]
+        else:
+            raise NotImplementedError(f'Unknown points option: {points!r}')
 
-        def get_plot_points2d(cid, img_id, points: str):
-            if points == "points2d":
-                return self[cid][img_id]
-            elif points == "reprojection":
-                return np.squeeze(self[cid].project(self.points3d[[img_id]]))
-            else:
-                raise NotImplementedError
-
-        return np.concatenate(
-            [
-                c.plot_2d(
-                    img_id,
-                    points2d=get_plot_points2d(cid, img_id, points),
-                    bones=self.bones,
-                    colors=self.colors,
-                )
-                for (cid, c) in enumerate(self)
-            ],
-            axis=1,
-        )
+        return np.concatenate(panels, axis=1)
 
     def plot_3d(
         self,
