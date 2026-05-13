@@ -24,18 +24,27 @@ class Camera:
         cx, cy: optical axis in pixels
         points2d: numpy array in pixels, TxJx2
         distort: list with 5 numbers
-        image_path: Example: img_{img_id}.jpg
+        image_path: Either a per-frame jpg/png template like
+            'img_{img_id}.jpg', or a path to a single video file
+            ('camera_0.mp4', '.avi') whose frames are read by index via
+            cv2.VideoCapture.
         """
 
         # fmt: off
         assert points2d.ndim == 3 and points2d.shape[2] == 2
         assert R is None or R.ndim == 2 and R.shape[0] == 3 and R.shape[1] == 3
-        assert tvec is None or tvec.ndim == 1 and tvec.shape[0] == 3 
+        assert tvec is None or tvec.ndim == 1 and tvec.shape[0] == 3
         assert distort is None or (distort.ndim == 1 and distort.shape[0] == 5)
         assert intr is None or intr.ndim == 2 and intr.shape[0] == 3 and intr.shape[1] == 3
         # fmt: on
 
         self.image_path = image_path
+        self._video_cap = None
+        self._video_pos = 0
+        if image_path is not None and image_path.lower().endswith(('.mp4', '.avi')):
+            cap = cv2.VideoCapture(image_path)
+            if cap.isOpened():
+                self._video_cap = cap
         self._points2d = points2d
 
         self.intrinsic = intr
@@ -118,9 +127,21 @@ class Camera:
         return self.points2d.shape[1]
 
     def get_image(self, img_id: int):
-        try:
-            img = cv2.imread(self.image_path.format(img_id=img_id))
-        except:
+        img = None
+        if self._video_cap is not None:
+            if img_id != self._video_pos:
+                self._video_cap.set(cv2.CAP_PROP_POS_FRAMES, img_id)
+                self._video_pos = img_id
+            ok, frame = self._video_cap.read()
+            if ok:
+                self._video_pos += 1
+                img = frame
+        else:
+            try:
+                img = cv2.imread(self.image_path.format(img_id=img_id))
+            except:
+                pass
+        if img is None:
             img = np.zeros((480, 960), dtype=np.uint8)
         if img.ndim == 2 or (img.ndim == 3 and img.shape[-1] == 1):
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)

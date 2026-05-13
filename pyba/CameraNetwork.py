@@ -25,11 +25,18 @@ class CameraNetwork:
 
         calib: should include keys "R", "tvec", "intr", "distort".
 
-        image_path: should include './data/test/camera_{cam_id}_img_00000{img_id}.jpg'
+        image_path: Either a per-frame jpg/png template like
+            './data/test/camera_{cam_id}_img_{img_id}.jpg' (must contain
+            both '{cam_id}' and '{img_id}'), or a video-file template
+            like './data/test/camera_{cam_id}.mp4' (must contain
+            '{cam_id}'; frames are read by index via cv2.VideoCapture).
 
         """
 
-        assert image_path is None or ("cam_id" in image_path and "img_id" in image_path)
+        if image_path is not None:
+            assert "cam_id" in image_path
+            if not image_path.lower().endswith(('.mp4', '.avi')):
+                assert "img_id" in image_path
         # T x J x 3
         self.image_path = image_path
         self.bones = bones
