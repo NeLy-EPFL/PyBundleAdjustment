@@ -183,6 +183,10 @@ class CameraNetwork:
         update_intrinsic: bool = True,
         update_distort: bool = True,
         cam_id: Optional[List[int]] = None,
+        seed: Optional[int] = 0,
+        loss: str = 'soft_l1',
+        f_scale: float = 8.0,
+        max_nfev: int = 500,
     ):
         from pyba.pyba import bundle_adjust
 
@@ -196,7 +200,9 @@ class CameraNetwork:
         for cid in unused_cam_id:
             self[cid].points2d[:] = 0
 
-        bundle_adjust(self, max_num_images, update_intrinsic, update_distort)
+        bundle_adjust(self, max_num_images, update_intrinsic, update_distort,
+                      seed=seed, loss=loss, f_scale=f_scale,
+                      max_nfev=max_nfev)
 
         # put 2d points back
         for cid in unused_cam_id:
