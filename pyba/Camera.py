@@ -12,13 +12,18 @@ class Camera:
     def __init__(
         self,
         points2d: np.ndarray,
+        cam_id: int,
         intr: Optional[np.ndarray] = None,
         R: Optional[np.ndarray] = None,
         tvec: Optional[np.ndarray] = None,
         distort: Optional[np.ndarray] = None,
         image_path: Optional[dict] = None,
+        heatmaps: Optional[np.ndarray] = None,
     ):
         """
+        cam_id: integer index identifying this camera within a multi-camera
+            rig. Used by downstream consumers (e.g. multi-view pose-correction
+            algorithms) that need to address cameras by index. Required.
         fx, fy: focal length in pixels
         tvec: translation vector
         cx, cy: optical axis in pixels
@@ -28,9 +33,16 @@ class Camera:
             'img_{img_id}.jpg', or a path to a single video file
             ('camera_0.mp4', '.avi') whose frames are read by index via
             cv2.VideoCapture.
+        heatmaps: optional pre-computed per-joint probability maps for this
+            camera. pyba treats the array as opaque (any shape) and never
+            reads it; it is stored so that consumers like pictorial-structures
+            pose correction can attach the network's raw heatmaps to their
+            corresponding camera object. May also be set after construction
+            via `cam.heatmaps = ...`. Default: None.
         """
 
         # fmt: off
+        assert isinstance(cam_id, (int, np.integer))
         assert points2d.ndim == 3 and points2d.shape[2] == 2
         assert R is None or R.ndim == 2 and R.shape[0] == 3 and R.shape[1] == 3
         assert tvec is None or tvec.ndim == 1 and tvec.shape[0] == 3
@@ -38,6 +50,7 @@ class Camera:
         assert intr is None or intr.ndim == 2 and intr.shape[0] == 3 and intr.shape[1] == 3
         # fmt: on
 
+        self.cam_id = int(cam_id)
         self.image_path = image_path
         self._video_cap = None
         self._video_pos = 0
@@ -51,6 +64,7 @@ class Camera:
         self.tvec = tvec
         self.R = R
         self.distort = np.zeros(5, dtype=float) if distort is None else distort
+        self.heatmaps = heatmaps
 
     @property
     def P(self):

@@ -63,7 +63,8 @@ class CameraNetwork:
                 if calib is not None
                 else {}
             )
-            cam = Camera(points2d=points2d[cam_id], image_path=image_path, **cal)
+            cam = Camera(points2d=points2d[cam_id], cam_id=cam_id,
+                         image_path=image_path, **cal)
             self.cam_list.append(cam)
 
         self._points3d = np.zeros((self.get_nimages(), self.get_njoints(), 3))
