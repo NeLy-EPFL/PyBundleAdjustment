@@ -12,7 +12,7 @@ class Camera:
     def __init__(
         self,
         points2d: np.ndarray,
-        cam_id: int,
+        cam_id: Optional[int] = None,
         intr: Optional[np.ndarray] = None,
         R: Optional[np.ndarray] = None,
         tvec: Optional[np.ndarray] = None,
@@ -21,9 +21,12 @@ class Camera:
         heatmaps: Optional[np.ndarray] = None,
     ):
         """
-        cam_id: integer index identifying this camera within a multi-camera
-            rig. Used by downstream consumers (e.g. multi-view pose-correction
-            algorithms) that need to address cameras by index. Required.
+        cam_id: optional integer index identifying this camera within a
+            multi-camera rig. Used by downstream consumers (e.g. multi-view
+            pose-correction algorithms) that need to address cameras by index.
+            `CameraNetwork` sets it automatically; only consumers that index
+            cameras by id (e.g. belief-propagation pose correction) require it.
+            Default: None.
         fx, fy: focal length in pixels
         tvec: translation vector
         cx, cy: optical axis in pixels
@@ -42,7 +45,7 @@ class Camera:
         """
 
         # fmt: off
-        assert isinstance(cam_id, (int, np.integer))
+        assert cam_id is None or isinstance(cam_id, (int, np.integer))
         assert points2d.ndim == 3 and points2d.shape[2] == 2
         assert R is None or R.ndim == 2 and R.shape[0] == 3 and R.shape[1] == 3
         assert tvec is None or tvec.ndim == 1 and tvec.shape[0] == 3
@@ -50,7 +53,7 @@ class Camera:
         assert intr is None or intr.ndim == 2 and intr.shape[0] == 3 and intr.shape[1] == 3
         # fmt: on
 
-        self.cam_id = int(cam_id)
+        self.cam_id = None if cam_id is None else int(cam_id)
         self.image_path = image_path
         self._video_cap = None
         self._video_pos = 0
