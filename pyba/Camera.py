@@ -181,7 +181,8 @@ class Camera:
                 img_id: int,
                 points2d: Optional[np.ndarray] = None,
                 bones: Optional[np.ndarray] = None,
-                colors: Optional[List[Tuple]] = None) -> np.ndarray:
+                colors: Optional[List[Tuple]] = None,
+                hidden_joints: Optional[Iterable[int]] = None) -> np.ndarray:
         """
         Plot 2D points (and optional bones) on the camera image for `img_id`.
 
@@ -197,6 +198,12 @@ class Camera:
             Array of joint-index pairs defining bones to draw.
         colors : list of tuples, optional
             Per-bone RGB colors.
+        hidden_joints : iterable of int, optional
+            Joint indices to omit from drawing (both their circle and any
+            bone touching them). This only affects what gets drawn here --
+            unlike zeroing `self.points2d`, it never touches the underlying
+            data, so triangulation/calibration callers are unaffected by
+            what a caller chooses to hide in a rendered frame.
 
         Returns
         -------
@@ -208,8 +215,12 @@ class Camera:
         if points2d is None:
             points2d = self.points2d[img_id]
 
+        hidden_joints = set(hidden_joints) if hidden_joints is not None else frozenset()
+
         if bones is not None:
             for idx, b in enumerate(bones):
+                if b[0] in hidden_joints or b[1] in hidden_joints:
+                    continue
                 if self.can_see(img_id, b[0]) and self.can_see(img_id, b[1]):
                     img = cv2.line(
                         img,
@@ -220,6 +231,8 @@ class Camera:
                     )
 
         for jid in range(self.get_njoints()):
+            if jid in hidden_joints:
+                continue
             if self.can_see(img_id, jid):
                 img = cv2.circle(
                     img, tuple(points2d[jid].T.astype(int)), 5, [0, 0, 128], 5
@@ -231,7 +244,8 @@ class Camera:
                            img_id: int,
                            points3d: np.ndarray,
                            bones: Optional[np.ndarray] = None,
-                           colors: Optional[List[Tuple]] = None) -> np.ndarray:
+                           colors: Optional[List[Tuple]] = None,
+                           hidden_joints: Optional[Iterable[int]] = None) -> np.ndarray:
         """
         Project a set of 3D points into this camera and plot them on the
         image for `img_id`.
@@ -248,6 +262,8 @@ class Camera:
             Array of joint-index pairs defining bones to draw.
         colors : list of tuples, optional
             Per-bone RGB colors.
+        hidden_joints : iterable of int, optional
+            Joint indices to omit from drawing. See `plot_2d`.
 
         Returns
         -------
@@ -261,7 +277,8 @@ class Camera:
                              f'(T, n_joints, 3), but got shape {points3d.shape}')
         # `project` expects a batch dimension (T, n_joints, 3)
         points2d = self.project(points3d[np.newaxis, ...]).squeeze(axis=0)
-        return self.plot_2d(img_id, points2d=points2d, bones=bones, colors=colors)
+        return self.plot_2d(img_id, points2d=points2d, bones=bones, colors=colors,
+                            hidden_joints=hidden_joints)
 
     def project(self, points3d: np.ndarray) -> np.ndarray:
         """
