@@ -14,9 +14,19 @@ def bundle_adjust(
     max_num_images: int = 1e3,
     update_intrinsic: bool = True,
     update_distort: bool = True,
+    seed: Optional[int] = 0,
+    loss: str = 'soft_l1',
+    f_scale: float = 8.0,
+    max_nfev: int = 500,
 ):
-    """ 
+    """
     max_num_images: large number of points take too long to optimize. will select random points instead.
+    seed: rng seed for the random subsampling of frames. Set to None for nondeterministic.
+    loss: robust loss for `scipy.optimize.least_squares`. 'soft_l1' downweights
+        outlier residuals (e.g. bad 2D pose detections) so they don't dominate
+        the fit. Use 'linear' for the original (non-robust, L2) behavior.
+    f_scale: soft inlier/outlier threshold in pixels for the robust loss.
+        Residuals well below `f_scale` are treated like L2; well above like L1.
     """
     (
         x0,
@@ -25,7 +35,9 @@ def bundle_adjust(
         n_points,
         camera_indices,
         point_indices,
-    ) = prepare_bundle_adjust_param(camNet=camNet, max_num_images=max_num_images)
+    ) = prepare_bundle_adjust_param(camNet=camNet,
+                                    max_num_images=max_num_images,
+                                    seed=seed)
 
     A = bundle_adjustment_sparsity(n_cameras, n_points, camera_indices, point_indices)
     res = least_squares(
@@ -36,6 +48,8 @@ def bundle_adjust(
         x_scale="jac",
         ftol=1e-4,
         method="trf",
+        loss=loss,
+        f_scale=f_scale,
         args=(
             camNet.cam_list,
             n_cameras,
@@ -46,7 +60,7 @@ def bundle_adjust(
             update_intrinsic,
             update_distort,
         ),
-        max_nfev=100,
+        max_nfev=max_nfev,
     )
     camNet.triangulate()
     return res
@@ -76,7 +90,9 @@ def bundle_adjustment_sparsity(
     return A
 
 
-def prepare_bundle_adjust_param(camNet: CameraNetwork, max_num_images: int = 500):
+def prepare_bundle_adjust_param(camNet: CameraNetwork,
+                                max_num_images: int = 500,
+                                seed: Optional[int] = 0):
     # prepare intrinsic
     camera_params = np.zeros(shape=(len(camNet.cam_list), 13), dtype=float)
     for cid in range(len(camNet.cam_list)):
@@ -87,11 +103,12 @@ def prepare_bundle_adjust_param(camNet: CameraNetwork, max_num_images: int = 500
         camera_params[cid, 8:13] = np.squeeze(camNet[cid].distort)
 
     # select which images to calculate residuals on
-    img_id_list = np.arange(camNet.get_nimages())
-    if camNet.get_nimages() > max_num_images:
-        img_id_list = np.random.randint(
-            0, high=camNet.get_nimages() - 1, size=(int(max_num_images))
-        )
+    n_images = camNet.get_nimages()
+    img_id_list = np.arange(n_images)
+    if n_images > max_num_images:
+        rng = np.random.default_rng(seed)
+        img_id_list = rng.choice(n_images, size=int(max_num_images),
+                                 replace=False)
 
     point_indices, camera_indices, pts2d, pts3d = list(), list(), list(), list()
     # for all image and joint
